@@ -387,6 +387,7 @@ def load_tokenizer_and_model(
         model_dir: str,
         peft_config: Optional[PeftConfig] = None,
 ) -> tuple[PreTrainedTokenizer, nn.Module]:
+    print(f"Model Dir is{model_dir}")
     tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
     if peft_config is not None:
         if peft_config.peft_type.name == "PREFIX_TUNING":
