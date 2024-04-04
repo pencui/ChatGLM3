@@ -23,9 +23,6 @@ Note:
     Users need to configure their special tokens and can enable multi-GPU support as per the provided instructions.
     Embedding Models only support in One GPU.
 
-    Running this script requires 14-15GB of GPU memory. 2 GB for the embedding model and 12-13 GB for the FP16 ChatGLM3 LLM.
-
-
 """
 
 import os
@@ -41,9 +38,10 @@ from contextlib import asynccontextmanager
 from typing import List, Literal, Optional, Union
 from loguru import logger
 from pydantic import BaseModel, Field
-from transformers import AutoTokenizer, AutoModel
+from ipex_llm.transformers import AutoModel
+from transformers import AutoTokenizer
 from utils import process_response, generate_chatglm3, generate_stream_chatglm3
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 
 from sse_starlette.sse import EventSourceResponse
 
@@ -55,7 +53,7 @@ MODEL_PATH = os.environ.get('MODEL_PATH', 'THUDM/chatglm3-6b')
 TOKENIZER_PATH = os.environ.get("TOKENIZER_PATH", MODEL_PATH)
 
 # set Embedding Model path
-EMBEDDING_PATH = os.environ.get('EMBEDDING_PATH', 'BAAI/bge-m3')
+EMBEDDING_PATH = os.environ.get('EMBEDDING_PATH', 'BAAI/bge-large-zh-v1.5')
 
 
 @asynccontextmanager
@@ -522,12 +520,12 @@ def contains_custom_function(value: str) -> bool:
     """
     return value and 'get_' in value
 
-
 if __name__ == "__main__":
     # Load LLM
     tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH, trust_remote_code=True)
-    model = AutoModel.from_pretrained(MODEL_PATH, trust_remote_code=True, device_map="auto").eval()
-
+    model = AutoModel.from_pretrained(MODEL_PATH,
+                                      load_in_4bit=True,
+                                      trust_remote_code=True)
     # load Embedding
-    embedding_model = SentenceTransformer(EMBEDDING_PATH, device="cuda")
+    # embedding_model = SentenceTransformer(EMBEDDING_PATH, device="cuda")
     uvicorn.run(app, host='0.0.0.0', port=8000, workers=1)
